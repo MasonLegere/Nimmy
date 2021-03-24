@@ -10,13 +10,15 @@ References:
 class GameInstance:
 
     def __init__(self, state):
-        num_piles = len(state)
+        self.num_piles = len(state)
 
         self.state = state
         self.seen_states = {}
-        self.terminating_states = [[0] * num_piles, [0] * max(0, num_piles - 3) + [2, 2, 2],
-                                   [0] * max(0, num_piles - 3) + [1, 2, 3]]
+        self.terminating_states = [[0] * self.num_piles, [0] * max(0, self.num_piles - 3) + [2, 2, 2],
+                                   [0] * max(0, self.num_piles - 3) + [1, 2, 3], [0] * max(0, self.num_piles - 4) + [1, 1, 2, 2]]
 
+    # Returns the possible game states that can be achieved from a given move applied to parameter input state.
+    # States are sorted for invariance purposes such that in the future moves can be ran in constant time checks.
     @staticmethod
     def get_children(state):
         children = []
@@ -29,17 +31,34 @@ class GameInstance:
 
                 # Convert to immutable type so it can be hashed
                 child_tuple = tuple(sorted(child))
-
                 if child_tuple not in seen_states:
                     seen_states.add(child_tuple)
                     children.append((child, child_tuple))
         return children
 
+    # Returns the next move from the AI given the current state along with modifying the internal game state of the
+    # instance. If the state is already in a losing then 1 is returned denoting a winning state along with the
+    # original array
     def next(self):
         if self.state in self.terminating_states:
-            return self.state
-        self.state = self.alpha_beta_pruning(self.state, -math.inf, math.inf, True)[1]
-        return self.state
+            return 1, self.state
+        move_path = self.alpha_beta_pruning(self.state, -math.inf, math.inf, True)
+        self.state = move_path[1][1]
+        return move_path[0], self.state
+
+    # Handles a player's move modifying the game state. A player's move is specified as the pile to pull from as well
+    # the number of the beads to pull. Returns a boolean value corresponding to if the move was valid and performed.
+    # In the case where the move was not valid, it will of course not be performed and the game state will not change.
+    def player_move(self, peg, amount):
+
+        # move to zero index
+        peg -= 1
+        is_valid = (0 <= peg < len(self.state)) and (0 < amount <= self.state[peg])
+
+        if is_valid:
+            self.state[peg] -= amount
+
+        return is_valid
 
     # Helper function that either:
     #   1) finds that the game path has already been computed taking into account 'equivalent' game states. That is,
