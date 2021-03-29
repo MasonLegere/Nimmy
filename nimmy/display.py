@@ -1,7 +1,8 @@
 import argparse
 from enum import Enum
-import blessed
 from math import floor
+
+import blessed
 
 from nimmy.game import GameInstance, GameStates
 
@@ -19,10 +20,13 @@ parser = argparse.ArgumentParser(
     description="Play a variation of the game of Nim against a computer",
     epilog="Use the arrow, wasd or hjkl keys to move select tiles and ENTER to remove them as well as to ask the "
            "computer to make a move.")
-parser.add_argument('-s', '--state', nargs='+', help='<Required> Set flag', required=True,
-                    type=lambda s: [int(item) for item in s.split(',')], dest='state')
-parser.add_argument('--player', dest='starting_turn', action='store_true')
-parser.add_argument('--cpu', dest='starting_turn', action='store_false')
+
+requiredNamed = parser.add_argument_group('required arguments')
+requiredNamed.add_argument('-s', '--state', help='String of non-negative integers separated by commas '
+                                                 'representing the initial state of the board', required=True,
+                           type=lambda s: [int(item) for item in s.split(',')], dest='state')
+parser.add_argument('--cpu', dest='starting_turn', action='store_false',
+                    help='Boolean flag to denote if the cpu goes first')
 parser.set_defaults(feature=True)
 
 
@@ -31,9 +35,7 @@ def main():
     config = {'max_stack': 9}
 
     args = parser.parse_args()
-    state = args.state[0]
-
-
+    state = args.state
 
     print(state)
 
@@ -109,6 +111,8 @@ class GameDisplay:
         self.nonempty_piles = [i for i in range(len(self.instance.state)) if self.instance.state[i] > 0]
         self.state_history = [str(self.instance.state.copy()) + '  START']
 
+    # Draws the history of the last 10 state changes in the top left of the display as well as who made the move that
+    # brought the game to that state
     def draw_history(self):
 
         divider = '=' * 40
@@ -129,6 +133,7 @@ class GameDisplay:
 
         print(self.term.move_xy(2, row) + divider)
 
+    # Prints an indication of who's move it is to play next
     def draw_move_title(self, turn):
 
         title = GameDisplay.PLAYER_TURN_STRING
@@ -167,7 +172,6 @@ class GameDisplay:
         board_width = len(self.instance.state) * spacing
         starting_position = self.term.height - 5
 
-        # TODO worry about the terminal being too small
         buffers_space = int(floor((self.term.width - board_width) / 2))
 
         for stack_number, stack in enumerate(self.instance.state):
@@ -227,8 +231,6 @@ class GameDisplay:
     # Helper function to modify the selected number of tiles when switching over piles
     def update_selected_amount(self):
         self.amount_selection = min(self.instance.state[self.pile_selection], 1)
-
-
 
 
 if __name__ == '__main__':

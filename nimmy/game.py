@@ -49,11 +49,7 @@ class GameInstance:
     # instance. If the state is already in a losing then 1 is returned denoting a winning state along with the
     # original array
     def next(self):
-        # if sorted(self.state) in self.terminating_states:
-        #     self.game_state = GameStates.win
-        #     return 1, self.state
         move_path = self.alpha_beta_pruning(self.state, -math.inf, math.inf, True)
-        print(move_path)
         next_move_state = move_path[1][1]
 
         if next_move_state in self.terminating_states:
