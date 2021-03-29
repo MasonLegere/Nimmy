@@ -18,6 +18,11 @@ of their turn
 - 1 pile with 1 object, 1 pile with 2 objects, 1 pile with 3 objects, all other piles are empty.
 - 2 piles with 1 object, 2 piles with 2 objects, all other piles empty. 
 
+
+Each turn you have the option to select a number of beads from each of the piles. After the selection is done the piles 
+will be sorted with respect to pile height. This is done to allow invariance within the pile structure. That is, the 
+solution algorithm groups "equivalent" game states together that can be reached by permutations. Because information is 
+lost in this caching by this grouping, the recovery of the original game state without the sort is not possible. 
 ![alt text](data/images/demo.png)
 
 ### Run Guide:

@@ -1,4 +1,5 @@
 import math
+from collections import defaultdict
 from enum import Enum
 
 '''
@@ -37,9 +38,11 @@ class GameInstance:
             for j in range(1, state[i] + 1):
                 child = state.copy()
                 child[i] -= j
+                child.sort()
 
                 # Convert to immutable type so it can be hashed
-                child_tuple = tuple(sorted(child))
+
+                child_tuple = tuple(child)
                 if child_tuple not in seen_states:
                     seen_states.add(child_tuple)
                     children.append((child, child_tuple))
@@ -50,37 +53,12 @@ class GameInstance:
     # original array
     def next(self):
         move_path = self.alpha_beta_pruning(self.state, -math.inf, math.inf, True)
-        next_move_state = move_path[1][1]
+        self.state = move_path[1][1]
 
-        if next_move_state in self.terminating_states:
+        if self.state in self.terminating_states:
             self.game_state = GameStates.loss
 
-        self.state = GameInstance.find_unsorted_state(self.state, next_move_state)
         return move_path[0], self.state
-
-    @staticmethod
-    def find_unsorted_state(original_state, next_state):
-
-        sorted_original = sorted(original_state)
-        sorted_next = sorted(next_state)
-        val = 0
-        diff = 0
-        unsorted_index = -1
-
-        for i in range(len(original_state)):
-            diff = sorted_original[i] - sorted_next[i]
-            if diff > 0:
-                val = sorted_original[i]
-                break
-
-        for i in range(len(original_state)):
-            if original_state[i] == val:
-                unsorted_index = i
-                break
-
-        assert unsorted_index > -1
-        original_state[unsorted_index] = original_state[unsorted_index] - diff
-        return original_state
 
     # Handles a player's move modifying the game state. A player's move is specified as the pile to pull from as well
     # the number of the beads to pull. Returns a boolean value corresponding to if the move was valid and performed.
@@ -130,31 +108,27 @@ class GameInstance:
         unseen_children = self.get_children(state)
 
         if maximizing_player:
-            bound = -math.inf
-            path = None
-            for child_pair in unseen_children:
-                val, next_states = self.find_or_tunnel(child_pair, alpha, beta, not maximizing_player)
-                if val > bound:
-                    bound = val
-                    path = next_states
+            val = -math.inf
+            path = []
+            for child_tuple in unseen_children:
+                val, path = self.find_or_tunnel(child_tuple, alpha, beta, not maximizing_player)
                 alpha = max(alpha, val)
                 if alpha >= beta:
                     break
-            return bound, state_list + path
+
+            return val, state_list + path
         else:
-            bound = math.inf
-            path = None
-            for child_pair in unseen_children:
-                val, next_states = self.find_or_tunnel(child_pair, alpha, beta, not maximizing_player)
-                if val < bound:
-                    bound = val
-                    path = next_states
+            val = math.inf
+            path = []
+            for child_tuple in unseen_children:
+                val, path = self.find_or_tunnel(child_tuple, alpha, beta, not maximizing_player)
                 beta = min(beta, val)
                 if beta <= alpha:
                     break
-            return bound, state_list + path
+            return val, state_list + path
 
     @staticmethod
     def is_valid_state(input_list):
 
         return all(i >= 0 for i in input_list)
+

@@ -37,8 +37,6 @@ def main():
     args = parser.parse_args()
     state = args.state
 
-    print(state)
-
     instance = GameInstance(state)
     display = GameDisplay(term, instance, config)
     current_turn = Turn.player
