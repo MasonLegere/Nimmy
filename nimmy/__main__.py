@@ -1,4 +1,4 @@
-from nimmy import display
+from sys import exit
+from .display import main
 
-if __name__ == '__main__':
-    display.main()
+exit(main())
