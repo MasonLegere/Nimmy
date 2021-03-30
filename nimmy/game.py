@@ -1,5 +1,4 @@
 import math
-from collections import defaultdict
 from enum import Enum
 
 '''
@@ -65,8 +64,7 @@ class GameInstance:
     # In the case where the move was not valid, it will of course not be performed and the game state will not change.
     def player_move(self, peg, amount):
 
-        # move to zero index
-        peg -= 1
+        peg -= 1 # move to zero index
         is_valid = (0 <= peg < len(self.state)) and (0 < amount <= self.state[peg])
 
         if is_valid:
@@ -82,7 +80,9 @@ class GameInstance:
     #       board configurations regardless of order
     #   2) moves recursive call further and stores values once computed
     def find_or_tunnel(self, child_pair, alpha, beta, maximizing_player):
+
         args = (child_pair[1], alpha, beta, maximizing_player)
+
         # we've already computed this game path
         if args in self.seen_states:
             val, next_states = self.seen_states[args]
@@ -105,30 +105,39 @@ class GameInstance:
             else:
                 return -1, state_list
 
-        unseen_children = self.get_children(state)
+        unseen_children = GameInstance.get_children(state)
 
         if maximizing_player:
-            val = -math.inf
+            bound = -math.inf
             path = []
             for child_tuple in unseen_children:
-                val, path = self.find_or_tunnel(child_tuple, alpha, beta, not maximizing_player)
-                alpha = max(alpha, val)
+                child_bound, child_state = self.find_or_tunnel(child_tuple, alpha, beta, False)
+
+                if child_bound > bound:
+                    bound = child_bound
+                    path = child_state
+
+                alpha = max(alpha, child_bound)
                 if alpha >= beta:
                     break
 
-            return val, state_list + path
+            return bound, state_list + path
         else:
-            val = math.inf
+            bound = math.inf
             path = []
             for child_tuple in unseen_children:
-                val, path = self.find_or_tunnel(child_tuple, alpha, beta, not maximizing_player)
-                beta = min(beta, val)
+                child_bound, child_state = self.find_or_tunnel(child_tuple, alpha, beta, True)
+
+                if child_bound < bound:
+                    bound = child_bound
+                    path = child_state
+
+                beta = min(beta, child_bound)
                 if beta <= alpha:
                     break
-            return val, state_list + path
+
+            return bound, state_list + path
 
     @staticmethod
     def is_valid_state(input_list):
-
         return all(i >= 0 for i in input_list)
-
